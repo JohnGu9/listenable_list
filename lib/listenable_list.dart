@@ -9,8 +9,9 @@ import 'value_notifier_mixin.dart';
 abstract class _ListBase<T> extends ListBase<T> {
   final List<T> _internal;
 
-  _ListBase([final Iterable<T> initial])
-      : _internal = initial?.toList(growable: true) ?? List();
+  _ListBase([final Iterable<T>? initial])
+      : _internal =
+            initial?.toList(growable: true) ?? List.empty(growable: true);
 
   @override
   int get length {
@@ -43,18 +44,18 @@ class ListenableList<T> extends _ListBase<T>
   bool lock = false;
 
   ListenableList() : super();
-  ListenableList.from(Iterable<T> other) : super(other);
+  ListenableList.from(Iterable<T>? other) : super(other);
 
   static StreamListenableList<T> fromStream<T>(
     final Stream<T> stream, {
-    final List<T> initial,
-    final Function(ListenableList<T> self, T) listen,
+    final List<T>? initial,
+    final Function(ListenableList<T> self, T)? listen,
   }) {
     return StreamListenableList(stream, initial: initial, listen: listen);
   }
 
   @Deprecated('Replace filter with override where')
-  ListenableList<T> filter({@required bool Function(T) filter}) {
+  ListenableList<T> filter({required bool Function(T) filter}) {
     return _FilterListenableList(parent: this, retain: filter);
   }
 
@@ -64,7 +65,7 @@ class ListenableList<T> extends _ListBase<T>
   }
 
   _TransformListenableList<X, T> transform<X>(
-      {@required final X Function(T) transform}) {
+      {required final X Function(T) transform}) {
     return _TransformListenableList<X, T>(this, transform);
   }
 
@@ -105,7 +106,7 @@ class ListenableList<T> extends _ListBase<T>
   void add(T element) {
     if (lock) return super.add(element);
     lock = true;
-    super.add(element);
+    _internal.add(element);
     added = {super.length - 1: element};
     removed = const {};
     changed = const {};
@@ -128,7 +129,7 @@ class ListenableList<T> extends _ListBase<T>
   }
 
   @override
-  bool remove(Object element) {
+  bool remove(Object? element) {
     if (lock) return super.remove(element);
 
     final index = super.indexOf(element);
@@ -148,7 +149,7 @@ class ListenableList<T> extends _ListBase<T>
   T removeAt(int index) {
     if (lock) return super.removeAt(index);
     lock = true;
-    final res = super.removeAt(index);
+    final T res = super.removeAt(index);
     added = const {};
     removed = {index: res};
     changed = const {};
@@ -160,7 +161,7 @@ class ListenableList<T> extends _ListBase<T>
   T removeLast() {
     if (lock) return super.removeLast();
     lock = true;
-    final res = super.removeLast();
+    final T res = super.removeLast();
     added = const {};
     removed = {length: res};
     changed = const {};
@@ -227,7 +228,7 @@ class ListenableList<T> extends _ListBase<T>
   }
 
   @override
-  void fillRange(int start, int end, [T fill]) {
+  void fillRange(int start, int end, [T? fill]) {
     if (lock) return super.fillRange(start, end, fill);
     if (start < end) {
       lock = true;
@@ -320,7 +321,7 @@ class ListenableList<T> extends _ListBase<T>
   }
 
   @override
-  void sort([int Function(T a, T b) compare]) {
+  void sort([int Function(T a, T b)? compare]) {
     if (lock) return super.sort(compare);
     lock = true;
     added = const {};
@@ -336,16 +337,16 @@ class ListenableList<T> extends _ListBase<T>
   @override
   void dispose() {
     super.dispose();
-    added = null;
-    removed = null;
-    changed = null;
+    added = const {};
+    removed = const {};
+    changed = const {};
   }
 }
 
 abstract class AutoListenableList<T> {
   stop();
   resume();
-  pause([Future<void> resumeSignal]);
+  pause([Future<void>? resumeSignal]);
 }
 
 class StreamListenableList<T> extends ListenableList<T>
@@ -355,12 +356,12 @@ class StreamListenableList<T> extends ListenableList<T>
 
   StreamListenableList(
     this._stream, {
-    final List<T> initial,
+    final List<T>? initial,
     this.listen,
   }) : super.from(initial) {
     _streamSubscription = _stream.listen(listen == null
         ? (T event) => _listen<T>(this, event)
-        : (T event) => listen(this, event))
+        : (T event) => listen!(this, event))
       ..onDone(_onDone);
   }
 
@@ -382,8 +383,8 @@ class StreamListenableList<T> extends ListenableList<T>
   @override
   StreamListenableList<T> get value => this;
   final Stream<T> _stream;
-  final Function(ListenableList<T>, T) listen;
-  StreamSubscription _streamSubscription;
+  final Function(ListenableList<T>, T)? listen;
+  StreamSubscription? _streamSubscription;
   final Completer<StreamListenableList<T>> _completer = Completer();
   Future<StreamListenableList<T>> get onDone => _completer.future;
 
@@ -394,18 +395,18 @@ class StreamListenableList<T> extends ListenableList<T>
   @override
   stop() {
     _onDone();
-    _streamSubscription.cancel();
+    _streamSubscription!.cancel();
     _streamSubscription = null;
   }
 
   @override
-  pause([Future<void> resumeSignal]) {
-    return _streamSubscription.pause(resumeSignal);
+  pause([Future<void>? resumeSignal]) {
+    return _streamSubscription!.pause(resumeSignal);
   }
 
   @override
   resume() {
-    return _streamSubscription.resume();
+    return _streamSubscription!.resume();
   }
 
   @override
@@ -419,8 +420,8 @@ class StreamListenableList<T> extends ListenableList<T>
 class _FilterListenableList<T> extends ListenableList<T>
     implements AutoListenableList<T> {
   _FilterListenableList({
-    @required this.parent,
-    @required this.retain,
+    required this.parent,
+    required this.retain,
   }) : super.from(parent._internal.where(retain)) {
     parent.addListener(_listener);
   }
@@ -459,7 +460,7 @@ class _FilterListenableList<T> extends ListenableList<T>
   }
 
   @override
-  pause([Future<void> resumeSignal]) async {
+  pause([Future<void>? resumeSignal]) async {
     parent.removeListener(_listener);
     if (resumeSignal != null) {
       await resumeSignal;
@@ -486,7 +487,7 @@ class _TransformListenableList<T, X> extends ListenableList<T>
       added = <int, T>{};
       final addedIndex = parent.added.keys.toList()..sort();
       for (final index in addedIndex)
-        insert(index, added[index] = convert(parent.added[index]));
+        insert(index, added[index] = convert(parent.added[index]!));
 
       removed = <int, T>{};
       final removedIndex = parent.removed.keys.toList()..sort((a, b) => b - a);
@@ -530,7 +531,7 @@ class _TransformListenableList<T, X> extends ListenableList<T>
   }
 
   @override
-  pause([Future<void> resumeSignal]) async {
+  pause([Future<void>? resumeSignal]) async {
     parent.removeListener(_listener);
     if (resumeSignal != null) {
       await resumeSignal;
