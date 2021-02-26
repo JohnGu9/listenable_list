@@ -1,3 +1,3 @@
-## [0.0.1] - TODO: Add release date.
+## ListenableList [0.1.0-nullsafety] - 2/26/2021.
 
-* TODO: Describe initial release.
+* The List with ValueListenable interface that invoke listeners while List was modified. 
