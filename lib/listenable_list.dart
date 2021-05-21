@@ -104,7 +104,7 @@ class ListenableList<T> extends _ListBase<T>
 
   @override
   void add(T element) {
-    if (lock) return super.add(element);
+    if (lock) return _internal.add(element);
     lock = true;
     _internal.add(element);
     added = {super.length - 1: element};
@@ -115,11 +115,11 @@ class ListenableList<T> extends _ListBase<T>
 
   @override
   void addAll(Iterable<T> iterable) {
-    if (lock) return super.addAll(iterable);
+    if (lock) return _internal.addAll(iterable);
     if (iterable.isNotEmpty) {
       lock = true;
       int index = super.length.toInt();
-      super.addAll(iterable);
+      _internal.addAll(iterable);
       added = {};
       for (final element in iterable) added[index++] = element;
       removed = const {};
@@ -130,7 +130,7 @@ class ListenableList<T> extends _ListBase<T>
 
   @override
   bool remove(Object? element) {
-    if (lock) return super.remove(element);
+    if (lock) return _internal.remove(element);
 
     final index = super.indexOf(element);
     if (index != -1) {
@@ -138,7 +138,7 @@ class ListenableList<T> extends _ListBase<T>
       added = const {};
       removed = {index: super[index]};
       changed = const {};
-      super.remove(element);
+      _internal.remove(element);
       notifyListeners();
       return true;
     }
@@ -147,9 +147,9 @@ class ListenableList<T> extends _ListBase<T>
 
   @override
   T removeAt(int index) {
-    if (lock) return super.removeAt(index);
+    if (lock) return _internal.removeAt(index);
     lock = true;
-    final T res = super.removeAt(index);
+    final T res = _internal.removeAt(index);
     added = const {};
     removed = {index: res};
     changed = const {};
@@ -159,9 +159,9 @@ class ListenableList<T> extends _ListBase<T>
 
   @override
   T removeLast() {
-    if (lock) return super.removeLast();
+    if (lock) return _internal.removeLast();
     lock = true;
-    final T res = super.removeLast();
+    final T res = _internal.removeLast();
     added = const {};
     removed = {length: res};
     changed = const {};
@@ -171,7 +171,7 @@ class ListenableList<T> extends _ListBase<T>
 
   @override
   void removeRange(int start, int end) {
-    if (lock) return super.removeRange(start, end);
+    if (lock) return _internal.removeRange(start, end);
     if (start < end) {
       lock = true;
       added = const {};
@@ -179,14 +179,14 @@ class ListenableList<T> extends _ListBase<T>
       changed = const {};
       for (int index = start.toInt(); index < end; index++)
         removed[index] = super[index];
-      super.removeRange(start, end);
+      _internal.removeRange(start, end);
       notifyListeners();
     }
   }
 
   @override
   void removeWhere(bool Function(T element) test) {
-    if (lock) return super.removeWhere(test);
+    if (lock) return _internal.removeWhere(test);
     final removed = <int, T>{};
     for (int index = 0; index < super.length; index++) {
       if (test(super[index])) removed[index] = super[index];
@@ -196,25 +196,25 @@ class ListenableList<T> extends _ListBase<T>
       added = const {};
       changed = const {};
       this.removed = removed;
-      super.removeWhere(test);
+      _internal.removeWhere(test);
       notifyListeners();
     }
   }
 
   @override
   void insert(int index, T element) {
-    if (lock) return super.insert(index, element);
+    if (lock) return _internal.insert(index, element);
     lock = true;
     added = {index: element};
     removed = const {};
     changed = const {};
-    super.insert(index, element);
+    _internal.insert(index, element);
     notifyListeners();
   }
 
   @override
   void insertAll(int index, Iterable<T> iterable) {
-    if (lock) return super.insertAll(index, iterable);
+    if (lock) return _internal.insertAll(index, iterable);
     if (iterable.isNotEmpty) {
       lock = true;
       added = {};
@@ -222,14 +222,14 @@ class ListenableList<T> extends _ListBase<T>
       changed = const {};
       int cache = index.toInt();
       for (final element in iterable) added[cache++] = element;
-      super.insertAll(index, iterable);
+      _internal.insertAll(index, iterable);
       notifyListeners();
     }
   }
 
   @override
   void fillRange(int start, int end, [T? fill]) {
-    if (lock) return super.fillRange(start, end, fill);
+    if (lock) return _internal.fillRange(start, end, fill);
     if (start < end) {
       lock = true;
       added = const {};
@@ -237,14 +237,14 @@ class ListenableList<T> extends _ListBase<T>
       changed = {};
       for (int index = start.toInt(); index < end; index++)
         changed[index] = super[index];
-      super.fillRange(start, end, fill);
+      _internal.fillRange(start, end, fill);
       notifyListeners();
     }
   }
 
   @override
   void replaceRange(int start, int end, Iterable<T> newContents) {
-    if (lock) return super.replaceRange(start, end, newContents);
+    if (lock) return _internal.replaceRange(start, end, newContents);
     if (start < end) {
       lock = true;
       added = const {};
@@ -252,14 +252,14 @@ class ListenableList<T> extends _ListBase<T>
       changed = {};
       for (int index = start.toInt(); index < end; index++)
         changed[index] = super[index];
-      super.replaceRange(start, end, newContents);
+      _internal.replaceRange(start, end, newContents);
       notifyListeners();
     }
   }
 
   @override
   void retainWhere(bool Function(T element) test) {
-    if (lock) return super.retainWhere(test);
+    if (lock) return _internal.retainWhere(test);
     final removed = <int, T>{};
     for (int index = 0; index < super.length; index++) {
       if (!test(super[index])) removed[index] = super[index];
@@ -269,14 +269,14 @@ class ListenableList<T> extends _ListBase<T>
       added = const {};
       this.removed = removed;
       changed = const {};
-      super.retainWhere(test);
+      _internal.retainWhere(test);
       notifyListeners();
     }
   }
 
   @override
   void setRange(int start, int end, Iterable<T> iterable, [int skipCount = 0]) {
-    if (lock) return super.setRange(start, end, iterable, skipCount);
+    if (lock) return _internal.setRange(start, end, iterable, skipCount);
     final changed = <int, T>{};
     for (int index = start.toInt(); index < end; index = index + 1 + skipCount)
       changed[index] = super[index];
@@ -286,27 +286,27 @@ class ListenableList<T> extends _ListBase<T>
       added = const {};
       removed = const {};
       this.changed = changed;
-      super.setRange(start, end, iterable, skipCount);
+      _internal.setRange(start, end, iterable, skipCount);
       notifyListeners();
     }
   }
 
   @override
   void clear() {
-    if (lock) return super.clear();
+    if (lock) return _internal.clear();
     if (isNotEmpty) {
       lock = true;
       added = const {};
       removed = super.asMap();
       changed = const {};
-      super.clear();
+      _internal.clear();
       notifyListeners();
     }
   }
 
   @override
   void setAll(int index, Iterable<T> iterable) {
-    if (lock) return super.setAll(index, iterable);
+    if (lock) return _internal.setAll(index, iterable);
     final changed = <int, T>{};
     for (int i = index.toInt(); i < index + iterable.length; i++)
       changed[i] = super[i];
@@ -315,19 +315,19 @@ class ListenableList<T> extends _ListBase<T>
       added = const {};
       removed = const {};
       this.changed = changed;
-      super.setAll(index, iterable);
+      _internal.setAll(index, iterable);
       notifyListeners();
     }
   }
 
   @override
   void sort([int Function(T a, T b)? compare]) {
-    if (lock) return super.sort(compare);
+    if (lock) return _internal.sort(compare);
     lock = true;
     added = const {};
     removed = const {};
     changed = super.asMap();
-    super.sort(compare);
+    _internal.sort(compare);
     notifyListeners();
   }
 
